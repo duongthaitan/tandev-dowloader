@@ -3,8 +3,13 @@ import { GoogleGenAI, Type } from "@google/genai";
 import { MediaMetadata } from "./types";
 
 export const analyzeMediaUrl = async (url: string): Promise<MediaMetadata> => {
-  // Khởi tạo instance ngay trước khi dùng để đảm bảo lấy đúng API Key từ môi trường
-  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY || "" });
+  const apiKey = process.env.API_KEY;
+  
+  if (!apiKey) {
+    throw new Error("API_KEY is not configured in environment variables.");
+  }
+
+  const ai = new GoogleGenAI({ apiKey });
   
   const response = await ai.models.generateContent({
     model: "gemini-3-flash-preview",
@@ -46,5 +51,10 @@ export const analyzeMediaUrl = async (url: string): Promise<MediaMetadata> => {
     }
   });
 
-  return JSON.parse(response.text) as MediaMetadata;
+  const text = response.text;
+  if (typeof text !== 'string' || !text) {
+    throw new Error("Empty or invalid response from AI");
+  }
+  
+  return JSON.parse(text) as MediaMetadata;
 };
